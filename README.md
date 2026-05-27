@@ -185,3 +185,32 @@ Maintains parent/public contact channels and landing page review metrics.
 *   `GET /health` - Diagnostic route exposing API uptime and request correlation tracking.
 
 ---
+## 🚀 Installation & Local Development
+
+1.  **Clone the Repository**:
+    ```bash
+    git clone <repository-url>
+    cd Backend-EduSite
+    ```
+2.  **Install dependencies**:
+    ```bash
+    npm install
+    ```
+3.  **Setup Environment Variables**:
+    Create a `.env` file in the project root:
+    ```env
+    PORT=3000
+    MONGOCONNECT=your_mongodb_connection_string
+    JWT_SECRET=your_jwt_secret_signature
+    ACCESS_TOKEN_TTL=30d
+    AWS_REGION=your_aws_region
+    AWS_ACCESS_KEY_ID=your_access_key
+    AWS_SECRET_ACCESS_KEY=your_secret_key
+    AWS_S3_BUCKET_NAME=your_s3_bucket_name
+    EMAIL=your_sending_email@gmail.com
+    EMAIL_PASS=your_gmail_app_password
+    ```
+4.  **Run Development Server**:
+    ```bash
+    npm run dev
+    ```

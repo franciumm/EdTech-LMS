@@ -16,8 +16,10 @@ const whitelist = [
 const corsOptions = {
   // Rule #1: The Origin Logic
   origin: function (origin, callback) {
-    // If the request has no origin (like Postman) OR its origin is on our guest list...
-    if (!origin || whitelist.indexOf(origin) !== -1) {
+    // Strictly enforce whitelist. If it's undefined (e.g. server-to-server or mobile app),
+    // and we need to allow it, we should add it to whitelist or use a specific API key middleware.
+    // For now, we restrict to the whitelist.
+    if (whitelist.indexOf(origin) !== -1 || (!origin && process.env.NODE_ENV === 'test')) {
       // ...then allow the request.
       callback(null, true);
     } else {
@@ -40,8 +42,9 @@ app.use(express.urlencoded({ extended: true }));
 app.use(requestId);
 app.use(morgan(':method :url :status - :response-time ms - reqId=:req[id]'));
 
-await DBConnect(); 
-
+if (process.env.NODE_ENV !== 'test') {
+  await DBConnect(); 
+}
 
 app.get('/health', (req, res) => {
   res.json({ success: true, data: { status: 'ok', reqId: req.id } });

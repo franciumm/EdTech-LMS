@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken'
 
-const DEFAULT_SIG = process.env.SIGN_IN_TOKEN_SECRET;
+const DEFAULT_SIG = process.env.JWT_SECRET;
 const DEFAULT_TTL = process.env.ACCESS_TOKEN_TTL || '30d'; 
 
 // ========================= generation ==============================
@@ -13,6 +13,7 @@ expiresIn = DEFAULT_TTL,
 if (!Object.keys(payload).length) {
     return false
 }
+payload.type = payload.type || 'access';
 const token = jwt.sign(payload, signature, { expiresIn })
 return token
 }

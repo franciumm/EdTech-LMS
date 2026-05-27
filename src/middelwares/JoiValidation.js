@@ -32,7 +32,22 @@ const Joivalidation = (schema, where = "merged") => (req, res, next) => {
   } else if (where === "query")   req.query  = value;
     else if (where === "params")  req.params = value;
     else if (where === "body")    req.body   = value;
-    else                          req.body   = { ...req.body, ...value };
+    else {
+        // where === "merged"
+        const validatedKeys = Object.keys(value);
+        
+        const cleanObj = (obj) => {
+            const clean = {};
+            for (const k in obj) {
+                if (validatedKeys.includes(k)) clean[k] = value[k];
+            }
+            return clean;
+        };
+        
+        req.body = cleanObj(req.body);
+        req.query = cleanObj(req.query);
+        req.params = cleanObj(req.params);
+    }
 
   next();
 };

@@ -3,7 +3,7 @@ import { assignmentModel } from "../../../../DB/models/assignment.model.js";
 import mongoose from "mongoose";
 import { SubassignmentModel } from "../../../../DB/models/submitted_assignment.model.js";
 import { sectionModel } from '../../../../DB/models/section.model.js';
-import { canViewSubmissionsFor } from '../../../middelwares/contentAuth.js';
+import { canViewSubmissionsFor, canManageStudent } from '../../../middelwares/contentAuth.js';
 import { pagination } from "../../../utils/pagination.js";
 import studentModel from "../../../../DB/models/student.model.js";
 import { groupModel } from "../../../../DB/models/groups.model.js";
@@ -134,6 +134,13 @@ export const getSubmissions = asyncHandler(async (req, res, next) => {
         })
       );
     }
+    
+    if (isteacher && user.role === 'assistant') {
+        const managesStudent = await canManageStudent(user, submission.studentId._id || submission.studentId, "assignment");
+        if (!managesStudent) {
+            return next(new Error("You are not authorized to view this student's submission.", { cause: 403 }));
+        }
+    }
 
     return res
       .status(200)
@@ -188,6 +195,13 @@ export const ViewSub = asyncHandler(async (req, res, next) => {
 
     if (!isAuthorized) {
         return next(new Error("You are not authorized to view this submission.", { cause: 403 }));
+    }
+    
+    if (req.isteacher && req.user.role === 'assistant') {
+        const managesStudent = await canManageStudent(req.user, submission.studentId._id || submission.studentId, "assignment");
+        if (!managesStudent) {
+            return next(new Error("You are not authorized to view this student's submission.", { cause: 403 }));
+        }
     }
    
     res.status(200).json({
@@ -348,6 +362,17 @@ const basePipeline = [
     // This logic is still needed for when a teacher wants a flat list of all "marked" subs, for example.
     if (status && ['marked', 'unmarked'].includes(status)) {
         filter.isMarked = (status === 'marked');
+    }
+
+    if (req.isteacher && req.user.role === 'assistant') {
+        const permittedGroupIds = req.user.permissions?.assignments?.map(id => new mongoose.Types.ObjectId(id)) || [];
+        if (groupId) {
+             if (!req.user.permissions?.assignments?.map(id => id.toString()).includes(groupId.toString())) {
+                 return next(new Error("You do not have permission for this group.", { cause: 403 }));
+             }
+        } else {
+             filter.groupId = { $in: permittedGroupIds };
+        }
     }
 
     if (Object.keys(filter).length === 0) return next(new Error("At least one query parameter is required.", { cause: 400 }));

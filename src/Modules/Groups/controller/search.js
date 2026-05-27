@@ -8,7 +8,7 @@ import { submissionStatusModel } from '../../../../DB/models/submissionStatus.mo
 import { pagination } from "../../../utils/pagination.js";
 
 
-const getAndHydrateGroupsViaAggregation = async (initialMatch, skip=0 , limit=5) => {
+const getAndHydrateGroupsViaAggregation = async (initialMatch, isteacher=false, skip=0 , limit=5) => {
     const pipeline = [
         // Stage 1: Initial Filter - Find only the groups the user is allowed to see.
         { $match: initialMatch },
@@ -21,8 +21,19 @@ const getAndHydrateGroupsViaAggregation = async (initialMatch, skip=0 , limit=5)
                 foreignField: '_id',
                 as: 'enrolledStudents',
                 pipeline: [
-                    // We only need specific fields for the final response
-                    { $project: { _id: 1, userName: 1, firstName: 1, lastName: 1, phone: 1, email: 1, parentPhone: 1 } }
+                    // We conditionally project fields depending on if the user is a teacher.
+                    { 
+                        $project: { 
+                            _id: 1, 
+                            userName: 1, 
+                            firstName: 1, 
+                            lastName: 1,
+                            // Only include PII if the caller is a teacher.
+                            phone: { $cond: [ isteacher, "$phone", "$$REMOVE" ] },
+                            email: { $cond: [ isteacher, "$email", "$$REMOVE" ] },
+                            parentPhone: { $cond: [ isteacher, "$parentPhone", "$$REMOVE" ] }
+                        } 
+                    }
                 ]
             }
         },
@@ -186,7 +197,7 @@ export const ById = asyncHandler(async (req, res, next) => {
         }
     }
 
-    const hydratedGroups = await getAndHydrateGroupsViaAggregation(initialMatch);
+    const hydratedGroups = await getAndHydrateGroupsViaAggregation(initialMatch, isteacher);
 
     if (!hydratedGroups || hydratedGroups.length === 0) {
         return next(new Error(`Group with ID "${_id}" not found`, { cause: 404 }));

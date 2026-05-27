@@ -16,7 +16,7 @@ export const forgetPassword = asyncHandler(async (req,res,next)=>{
     }
     const hashId = new mongoose.Types.ObjectId().toString();
     const Hash =  bycrypt.hashSync(hashId, parseInt(process.env.HASH_ROUNDS));
-    const token = jwt.sign({ email , Hash}, process.env.RESET_SIG, { expiresIn: 60 * 5 });
+    const token = jwt.sign({ email , Hash, type: 'password_reset'}, process.env.RESET_SIG, { expiresIn: 60 * 5 });
     const ResetLink = `${req.protocol}://${req.headers.host}/student/reset/${token}`
     const html = `<!DOCTYPE html>
     <html>

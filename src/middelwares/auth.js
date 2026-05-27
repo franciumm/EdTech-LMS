@@ -128,11 +128,12 @@ export const isAuth = asyncHandler(async (req, res, next) => {
   const { token, error } = parseAuthHeader(req);
   if (error) return next(new Error(error, { cause: 401 }));
 
-  const secret = process.env.SIGN_IN_TOKEN_SECRET;
-  if (!secret) return next(new Error("Server misconfig: missing SIGN_IN_TOKEN_SECRET", { cause: 500 }));
+  const secret = process.env.JWT_SECRET;
+  if (!secret) return next(new Error("Server misconfig: missing JWT_SECRET", { cause: 500 }));
 
   try {
     const decoded = verifyToken({ token, signature: secret });
+    if (decoded?.type !== 'access') return next(new Error('Invalid token type.', { cause: 401 }));
     if (!decoded?._id) return next(new Error('Invalid token payload.', { cause: 401 }));
     if (!mongoose.Types.ObjectId.isValid(decoded._id)) {
       return next(new Error('Invalid user ID in token', { cause: 400 }));
@@ -170,10 +171,11 @@ export const AdminAuth = asyncHandler(async (req, res, next) => {
     const { token, error } = parseAuthHeader(req);
     if (error) return next(new Error(error, { cause: 401 }));
 
-    const secret = process.env.SIGN_IN_TOKEN_SECRET;
-    if (!secret) return next(new Error("Server misconfig: missing SIGN_IN_TOKEN_SECRET", { cause: 500 }));
+    const secret = process.env.JWT_SECRET;
+    if (!secret) return next(new Error("Server misconfig: missing JWT_SECRET", { cause: 500 }));
 
     const decoded = verifyToken({ token, signature: secret });
+    if (decoded?.type !== 'access') return next(new Error('Invalid token type.', { cause: 401 }));
     if (!decoded?._id) return next(new Error('Invalid token payload.', { cause: 401 }));
     if (!mongoose.isValidObjectId(decoded._id)) {
       return next(new Error("Invalid user ID in token", { cause: 400 }));

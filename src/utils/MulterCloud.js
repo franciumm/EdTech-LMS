@@ -14,7 +14,7 @@ export const multerCloudFunction = (allowedExtensionsArr) => {
   // This is the core change. We replace diskStorage with the multerS3 engine.
   const storage = multerS3({
     s3: s3, // Your configured S3 client from S3Client.js
-    bucket: process.env.S3_BUCKET_NAME, // The S3 bucket to upload to
+    bucket: process.env.AWS_S3_BUCKET_NAME, // The S3 bucket to upload to
     acl: 'private', // Access control for the file
     contentType: multerS3.AUTO_CONTENT_TYPE, // Automatically set the correct Content-Type
 

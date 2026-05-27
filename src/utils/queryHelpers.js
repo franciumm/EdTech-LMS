@@ -10,8 +10,11 @@ import mongoose from 'mongoose';
  * @returns {object} A fully formed Mongoose filter object.
  */
 export const createContentSearchFilter = (type, searchQuery) => {
+    // Escape regex characters to prevent ReDoS attacks
+    const escapedQuery = searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    
     // Base filter with a case-insensitive regex for powerful searching
-    const baseFilter = { $regex: searchQuery, $options: 'i' };
+    const baseFilter = { $regex: escapedQuery, $options: 'i' };
 
     const filter = {};
 

@@ -24,7 +24,7 @@ export const newConfirmEmail = asyncHandler(async (req,res,next)=>{
     const user = await UserModel.findOne({email : tokenDec.email.toLowerCase()});
     if (!user) {return res.send(`<a href="${req.protocol}://${req.headers.host}/EduSite/#/signup">Ops looks like u don't have account yet follow me to signup now. </a>`)}
     if(user.isdeleted ){return next(new Error('This Email is deleted Please Login Again ', {cause : 400}))}
-    const newToken = jwt.sign({email: user.email,user}, process.env.EMAIL_SIG, { expiresIn: 60 * 2 })
+    const newToken = jwt.sign({email: user.email,user, type: 'email_confirm'}, process.env.EMAIL_SIG, { expiresIn: 60 * 2 })
     const link = `${req.protocol}://${req.headers.host}/student/confirmEmail/${newToken}`
     const html = `<!DOCTYPE html>
     <html>

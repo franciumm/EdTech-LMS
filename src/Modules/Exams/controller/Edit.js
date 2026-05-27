@@ -9,7 +9,7 @@ import { groupModel } from "../../../../DB/models/groups.model.js";
 import { toZonedTime, fromZonedTime, format } from 'date-fns-tz';
 import { deleteFileFromS3 } from "../../../utils/S3Client.js";
 import fs from 'fs'; 
-import { canAccessContent } from "../../../middelwares/contentAuth.js";
+import { canAccessContent, canManageStudent } from "../../../middelwares/contentAuth.js";
 import { sectionModel } from "../../../../DB/models/section.model.js";
 const fsPromises = fs.promises;
 import { CONTENT_TYPES } from "../../../utils/constants.js"; // Import constants
@@ -238,6 +238,13 @@ export const downloadSubmittedExam = asyncHandler(async (req, res, next) => {
         return next(new Error("You are not authorized to access this submission.", { cause: 403 }));
     }
     
+    if (isteacher && user.role === 'assistant') {
+        const managesStudent = await canManageStudent(user, submission.studentId, CONTENT_TYPES.EXAM);
+        if (!managesStudent) {
+            return next(new Error("You are not authorized to download this student's submission.", { cause: 403 }));
+        }
+    }
+    
     // If we reach here, the user is either a teacher (who can access anything)
     // or the student who owns the submission. Access is granted.
 
@@ -289,6 +296,13 @@ export const markSubmissionWithPDF = asyncHandler(async (req, res, next) => {
 
     if (!hasAccess) {
         return next(new Error("You are not authorized to mark submissions for this exam.", { cause: 403 }));
+    }
+    
+    if (req.user.role === 'assistant') {
+        const managesStudent = await canManageStudent(req.user, subExam.studentId, CONTENT_TYPES.EXAM);
+        if (!managesStudent) {
+            return next(new Error("You are not authorized to grade this student's submission.", { cause: 403 }));
+        }
     }
  
 
@@ -384,21 +398,7 @@ export const deleteSubmittedExam = asyncHandler(async (req, res, next) => {
     } else if (user._id.equals(submission.studentId)) {
         isAuthorized = true;
     }else if(user.role === "assistant" ){
-        // To check permission, we must find which groups the exam belongs to.
-        const exam = await examModel.findById(submission.examId).select('groupIds').lean();
-
-        if (exam) {
-            const permittedGroupIds = user.permissions.exams?.map(id => id.toString()) || [];
-            const examGroupIds = exam.groupIds.map(id => id.toString());
-
-            // Check if there is any overlap between the assistant's permitted groups and the exam's groups.
-            // If the assistant manages at least one of the exam's groups, they are authorized.
-            const hasPermission = examGroupIds.some(groupId => permittedGroupIds.includes(groupId));
-            
-            if (hasPermission) {
-                isAuthorized = true;
-            }
-        }
+        isAuthorized = await canManageStudent(user, submission.studentId, CONTENT_TYPES.EXAM);
     }
 
     if (!isAuthorized) {

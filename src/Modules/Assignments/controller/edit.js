@@ -8,7 +8,7 @@ import studentModel from "../../../../DB/models/student.model.js";
 import mongoose from "mongoose";
 import { toZonedTime } from 'date-fns-tz';
 import { deleteFileFromS3 } from '../../../utils/S3Client.js';
-import { canAccessContent, canViewSubmissionsFor } from '../../../middelwares/contentAuth.js';
+import { canAccessContent, canViewSubmissionsFor, canManageStudent } from '../../../middelwares/contentAuth.js';
 import { assignmentModel } from '../../../../DB/models/assignment.model.js';
 import { s3 } from '../../../utils/S3Client.js';
 import { CONTENT_TYPES } from "../../../utils/constants.js"; 
@@ -242,6 +242,13 @@ if (!req.isteacher) return next(new Error("Forbidden.", { cause: 403 }));
     if (!hasAccess) {
         return next(new Error("You are not authorized to mark submissions for this assignment.", { cause: 403 }));
     }
+    
+    if (req.user.role === 'assistant') {
+        const managesStudent = await canManageStudent(req.user, submission.studentId._id || submission.studentId, CONTENT_TYPES.ASSIGNMENT);
+        if (!managesStudent) {
+            return next(new Error("You are not authorized to grade this student's submission.", { cause: 403 }));
+        }
+    }
 
   try {
    
@@ -326,6 +333,13 @@ const submission = await SubassignmentModel.findById(submissionId);
 
     if (!isAuthorized) {
         return next(new Error("You are not authorized to delete this submission.", { cause: 403 }));
+    }
+
+    if (req.isteacher && req.user.role === 'assistant') {
+        const managesStudent = await canManageStudent(req.user, submission.studentId._id || submission.studentId, CONTENT_TYPES.ASSIGNMENT);
+        if (!managesStudent) {
+            return next(new Error("You are not authorized to delete this student's submission.", { cause: 403 }));
+        }
     }
       await submissionStatusModel.updateOne(
         { studentId: submission.studentId, contentId: submission.assignmentId, contentType: 'assignment' },

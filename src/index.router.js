@@ -16,24 +16,19 @@ import reviewsRouter from "./Modules/reviews/reviews.router.js"
 import contactRouter from './Modules/Contact/contact.router.js';
 
 const bootstrape =  async (app,express)=>{
-    app.use(express.json({limit :'10mb'}));
-    app.use(express.urlencoded({ limit :'10mb', extended: false }));
-
-
-
-    app.use('/group',group);
-    app.use('/exams',exam);
-    app.use("/assignments", assg)
-    app.use('/student',auth);
-    app.use('/material',mater);
-    app.use('/sections', section); 
-    app.use('/search', search);  
-    app.use('/assistant', assistant);
-    app.use('/health', healthRouter);
-    app.use("/reports", reportRouter);
-    app.use("/courses", courseRouter);
-    app.use("/reviews", reviewsRouter);
-    app.use('/contact', contactRouter); 
+    app.use('/api/v1/group',group);
+    app.use('/api/v1/exams',exam);
+    app.use("/api/v1/assignments", assg)
+    app.use('/api/v1/student',auth);
+    app.use('/api/v1/material',mater);
+    app.use('/api/v1/sections', section); 
+    app.use('/api/v1/search', search);  
+    app.use('/api/v1/assistant', assistant);
+    app.use('/api/v1/health', healthRouter);
+    app.use("/api/v1/reports", reportRouter);
+    app.use("/api/v1/courses", courseRouter);
+    app.use("/api/v1/reviews", reviewsRouter);
+    app.use('/api/v1/contact', contactRouter); 
     app.use('*', notFound);          
     app.use(globalerrorHandling);
 

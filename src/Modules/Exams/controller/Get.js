@@ -114,6 +114,18 @@ export const getSubmittedExams = asyncHandler(async (req, res, next) => {
             } else {
                 statusQuery.groupId = { $in: exam.groupIds };
             }
+            
+            if (user.role === 'assistant') {
+                const permittedGroups = user.permissions?.exams?.map(id => id.toString()) || [];
+                if (groupId) {
+                    if (!permittedGroups.includes(groupId.toString())) {
+                        return next(new Error("You do not have permission for this group.", { cause: 403 }));
+                    }
+                } else {
+                    const overlap = exam.groupIds.filter(id => permittedGroups.includes(id.toString()));
+                    statusQuery.groupId = { $in: overlap };
+                }
+            }
  
         if (studentId) {
             if (!mongoose.Types.ObjectId.isValid(studentId)) return next(new Error("Invalid Student ID format.", { cause: 400 }));

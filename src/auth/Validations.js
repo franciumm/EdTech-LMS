@@ -16,8 +16,17 @@ export const  signup = Joi.object({
 }).required()
 
 
-export const  Login = Joi.object({
+export const Login = Joi.object({
     email:Joi.string().email({ minDomainSegments: 2,maxDomainSegments:3, tlds: { allow: ['com', 'net','eg','edu'] } }).required(),
     password:Joi.string().pattern(new RegExp(/^[a-zA-Z0-9]{3,30}$/)).required(),
 
+}).required()
+
+export const forgetPassword = Joi.object({
+    email:Joi.string().email({ minDomainSegments: 2,maxDomainSegments:3, tlds: { allow: ['com', 'net','eg','edu'] } }).required()
+}).required()
+
+export const resetPassword = Joi.object({
+    password:Joi.string().pattern(new RegExp(/^[a-zA-Z0-9]{3,30}$/)).required(),
+    cPassword: Joi.string().valid(Joi.ref('password')).required()
 }).required()

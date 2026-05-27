@@ -28,10 +28,10 @@ export const Signup = asyncHandler(async(req,res,next)=>{
     
     const newUser ={firstName,lastName,email,parentemail, userName,password ,parentPhone: parentphone , phone ,confirmEmail:true };
     
-    const token = jwt.sign({  email, user:newUser }, process.env.EMAIL_SIG, { expiresIn: 60 * 120 });
+    const token = jwt.sign({  email, user:newUser, type: 'email_confirm' }, process.env.EMAIL_SIG, { expiresIn: 60 * 120 });
     
    
-    const newConfirmEmailToken = jwt.sign({  email }, process.env.EMAIL_SIG);
+    const newConfirmEmailToken = jwt.sign({  email, type: 'email_confirm' }, process.env.EMAIL_SIG);
    
         const link = `${req.protocol}://${req.headers.host}/student/confirmEmail/${token}`
         const requestNewEmailLink = `${req.protocol}://${req.headers.host}/student/newConfirmEmail/${newConfirmEmailToken}`
@@ -248,10 +248,11 @@ return next(new Error ('The User Doesn`t exist try to signUp',{cause : 404}))
         email ,
         password , 
         _id: user._id,
-        role:'student'
+        role:'student',
+        type: 'access'
         
     },
-signature:process.env.SIGN_IN_TOKEN_SECRET,
+signature:process.env.JWT_SECRET,
 
 });
    
@@ -324,12 +325,13 @@ export const AdminLogin = asyncHandler(async(req,res,next)=>{
         _id: user._id,
         email: user.email,
         role: user.role,
-        permissions: user.permissions // Include permissions in the token
+        permissions: user.permissions, // Include permissions in the token
+        type: 'access'
     };
 
     const token = generateToken({
         payload: tokenPayload,
-        signature: process.env.SIGN_IN_TOKEN_SECRET,
+        signature: process.env.JWT_SECRET,
     });
 
     res.status(200).json({  token });

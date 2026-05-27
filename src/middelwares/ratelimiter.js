@@ -33,7 +33,15 @@ export const generalLimiter = rateLimit({
 export const loginLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
   max: 60,                  // your rule
-  message: 'You have made too many lOGIN requests. Please try again later.',
+  message: 'You have made too many login requests. Please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+export const emailLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 5,                   // max 5 emails per hour per IP
+  message: 'Too many email requests from this IP. Please try again after an hour.',
   standardHeaders: true,
   legacyHeaders: false,
 });

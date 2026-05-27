@@ -61,9 +61,25 @@ export const canViewSubmissionsFor = async ({ user, isTeacher, contentId, conten
     if (isTeacher && user.role === 'main_teacher') {
         return true;
     }   
-        return canAccessContent({ user, isTeacher, contentId, contentType });
+    return canAccessContent({ user, isTeacher, contentId, contentType });
 }
 
+export const canManageStudent = async (user, studentId, contentType) => {
+    if (user.role === 'main_teacher') return true;
+    
+    const student = await studentModel.findById(studentId).select('groupIds').lean();
+    if (!student || !student.groupIds) return false;
+
+    let permittedGroupIds = [];
+    if (contentType === CONTENT_TYPES.ASSIGNMENT) permittedGroupIds = user.permissions?.assignments || [];
+    else if (contentType === CONTENT_TYPES.EXAM) permittedGroupIds = user.permissions?.exams || [];
+    else if (contentType === CONTENT_TYPES.MATERIAL) permittedGroupIds = user.permissions?.materials || [];
+    else if (contentType === CONTENT_TYPES.SECTION) permittedGroupIds = user.permissions?.sections || [];
+    else permittedGroupIds = user.permissions?.groups || [];
+
+    const permittedSet = new Set(permittedGroupIds.map(id => id.toString()));
+    return student.groupIds.some(gId => permittedSet.has(gId.toString()));
+};
 
 const isStudentTimelineValid = ({ user, content }) => {
     // Check for material (which has no dates) or content with no timeline.
