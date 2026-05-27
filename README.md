@@ -33,8 +33,10 @@ The application is engineered around modern, lightweight, and performant technol
     *   `bcrypt` for secure user password hashing.
     *   `jsonwebtoken` (JWT) for stateless user sessions.
     *   `helmet` for securing HTTP headers.
-    *   `cors` for controlling domain origins.
-    *   `express-rate-limit` to prevent credential stuffing and form spamming.
+    *   `cors` for controlling domain origins and preventing cross-site scripting bypasses.
+    *   `express-rate-limit` to prevent credential stuffing, form spamming, and DDoS attempts.
+    *   **Anti-Injection & ReDoS Mitigation**: Stripping unknown fields via Joi to prevent NoSQL Operator injections and Catastrophic Backtracking in regex searches.
+    *   **Data Leakage Prevention**: Strict schema selection and payload sanitization ensures sensitive PII is never exposed through open search endpoints.
 *   **Document Generation**:
     *   [PDFKit](https://pdfkit.org/) and `pdf-lib` for programmatic, custom-styled PDF reports.
     *   [ExcelJS](https://github.com/exceljs/exceljs) for generating spreadsheet summaries.
@@ -45,6 +47,10 @@ The application is engineered around modern, lightweight, and performant technol
 *   **Logging & Diagnostics**:
     *   `pino` for low-overhead structured logs.
     *   `morgan` for real-time HTTP request logging, configured with unique correlation IDs (`requestId`).
+*   **Testing Infrastructure**:
+    *   Native Node.js test runner (`node:test`) for ESM-compatible, dependency-light testing.
+    *   `supertest` for endpoint and API routing verification.
+    *   `mongodb-memory-server` for isolated, ephemeral database testing without touching production or local development data.
 
 ---
 
@@ -185,6 +191,24 @@ Maintains parent/public contact channels and landing page review metrics.
 *   `GET /health` - Diagnostic route exposing API uptime and request correlation tracking.
 
 ---
+
+## 🛡️ Testing & Security Verification
+
+EDUsite Backend features a comprehensive security test suite leveraging the native **`node:test`** runner to guarantee production stability and security against common OWASP vulnerabilities.
+
+- **Isolated Ephemeral Environments**: Testing automatically intercepts database connections and spins up an in-memory instance (`mongodb-memory-server`). This guarantees tests can be run safely without mutating your actual database.
+- **Automated Security Suites**: The testing pipeline covers critical threat vectors:
+    - **Authentication Hardening**: Verifies rate-limiters trigger exactly at their thresholds (429 Too Many Requests), NoSQL query injection payloads are neutralized, and Joi validations successfully reject non-string malformed objects.
+    - **AWS S3 Auditing**: Ensures generated Presigned URLs contain strict, short-lived expiration limits and verifies that malicious executable scripts are blocked from cloud upload servers.
+    - **ReDoS & Data Leakage**: Verifies that complex, catastrophic Regex queries are blocked before evaluating, and ensures search operations only return sanitized arrays without leaking document PII.
+
+Run the test suite safely using:
+```bash
+npm run test
+```
+
+---
+
 ## 🚀 Installation & Local Development
 
 1.  **Clone the Repository**:
